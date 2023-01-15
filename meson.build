@@ -1,6 +1,6 @@
 project('dpdk_flow_logger', 'C',
 	version: '0.0.1',
-    default_options: ['warning_level=2']
+    default_options: ['buildtype=debug', 'werror=true', 'warning_level=2'],
 )
 
 add_project_arguments('-DALLOW_EXPERIMENTAL_API', language: 'c')
