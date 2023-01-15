@@ -10,6 +10,7 @@ if not dependency_libdpdk.found()
 	error('Please set PKG_CONFIG_PATH to DPDK packages path, for further instructions please refer to the DOCA Reference Applications guide')
 endif
 app_dependencies = [dependency_libdpdk]
+app_dependencies += dependency('json-c', required: true)
 app_inc_dirs = include_directories()
 app_srcs = [
 	meson.project_name() + '.c',
