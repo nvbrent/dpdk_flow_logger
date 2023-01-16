@@ -32,6 +32,13 @@ struct json_object * json_object_new_function(const char *func_name)
     return f;
 }
 
+struct json_object * json_object_new_function_args(struct json_object * f)
+{
+    struct json_object * args = json_object_new_object();
+    json_object_object_add(f, "arguments", args);
+    return args;
+}
+
 void json_object_end_function(struct json_object * f)
 {
     json_object_to_fd(fileno(f_log), f, json_out_flag);
@@ -43,8 +50,7 @@ void json_object_end_function(struct json_object * f)
 int rte_eal_init(int argc, char **argv)
 {
     struct json_object * f = json_object_new_function(__FUNCTION__);
-    struct json_object * args = json_object_new_object();
-    json_object_object_add(f, "arguments", args);
+    struct json_object * args = json_object_new_function_args(f);
 
     json_object_object_add(args, "argc", json_object_new_int(argc));
     struct json_object * json_argv = json_object_new_array();
@@ -61,12 +67,145 @@ int rte_eal_init(int argc, char **argv)
 uint16_t rte_eth_dev_count_avail(void)
 {
     struct json_object * f = json_object_new_function(__FUNCTION__);
-    struct json_object * args = json_object_new_object();
-    json_object_object_add(f, "arguments", args);
+    (void)json_object_new_function_args(f);
     uint16_t res = (*p_rte_eth_dev_count_avail)();
     json_object_object_add(f, "return", json_object_new_int(res));
     json_object_end_function(f);
     return res;
+}
+
+struct json_object *
+json_object_new_flow_attr(const struct rte_flow_attr *attr)
+{
+    struct json_object * json_attr = json_object_new_object();
+    if (attr->group)
+        json_object_object_add(json_attr, "group", json_object_new_int(attr->group));
+    if (attr->priority)
+        json_object_object_add(json_attr, "priority", json_object_new_int(attr->priority));
+    if (attr->ingress)
+        json_object_object_add(json_attr, "ingress", json_object_new_boolean(attr->ingress));
+    if (attr->egress)
+        json_object_object_add(json_attr, "egress", json_object_new_boolean(attr->egress));
+    if (attr->transfer)
+        json_object_object_add(json_attr, "transfer", json_object_new_boolean(attr->transfer));
+    if (attr->transfer_mode)
+        json_object_object_add(json_attr, "transfer_mode", json_object_new_int(attr->transfer_mode));
+    if (attr->hint_num_of_rules_log)
+        json_object_object_add(json_attr, "hint_num_of_rules_log", json_object_new_int(attr->hint_num_of_rules_log));
+    return json_attr;
+}
+
+const char *
+flow_item_type_name(enum rte_flow_item_type t)
+{
+    switch (t)
+    {
+#define HANDLE_CASE(s) case RTE_FLOW_ITEM_TYPE_ ## s: return #s
+    HANDLE_CASE(END);
+    HANDLE_CASE(VOID);
+    HANDLE_CASE(INVERT);
+    HANDLE_CASE(ANY);
+    HANDLE_CASE(PF);
+    HANDLE_CASE(VF);
+    HANDLE_CASE(PHY_PORT);
+    HANDLE_CASE(PORT_ID);
+    HANDLE_CASE(RAW);
+    HANDLE_CASE(ETH);
+    HANDLE_CASE(VLAN);
+    HANDLE_CASE(IPV4);
+    HANDLE_CASE(IPV6);
+    HANDLE_CASE(ICMP);
+    HANDLE_CASE(UDP);
+    HANDLE_CASE(TCP);
+    HANDLE_CASE(SCTP);
+    HANDLE_CASE(VXLAN);
+    HANDLE_CASE(E_TAG);
+    HANDLE_CASE(NVGRE);
+    HANDLE_CASE(MPLS);
+    HANDLE_CASE(GRE);
+    HANDLE_CASE(FUZZY);
+    HANDLE_CASE(GTP);
+    HANDLE_CASE(GTPC);
+    HANDLE_CASE(GTPU);
+    HANDLE_CASE(ESP);
+    HANDLE_CASE(GENEVE);
+    HANDLE_CASE(VXLAN_GPE);
+    HANDLE_CASE(ARP_ETH_IPV4);
+    HANDLE_CASE(IPV6_EXT);
+    HANDLE_CASE(ICMP6);
+    HANDLE_CASE(ICMP6_ND_NS);
+    HANDLE_CASE(ICMP6_ND_NA);
+    HANDLE_CASE(ICMP6_ND_OPT);
+    HANDLE_CASE(ICMP6_ND_OPT_SLA_ETH);
+    HANDLE_CASE(ICMP6_ND_OPT_TLA_ETH);
+    HANDLE_CASE(MARK);
+    HANDLE_CASE(META);
+    HANDLE_CASE(GRE_KEY);
+    HANDLE_CASE(GTP_PSC);
+    HANDLE_CASE(PPPOES);
+    HANDLE_CASE(PPPOED);
+    HANDLE_CASE(PPPOE_PROTO_ID);
+    HANDLE_CASE(NSH);
+    HANDLE_CASE(IGMP);
+    HANDLE_CASE(AH);
+    HANDLE_CASE(HIGIG2);
+    HANDLE_CASE(TAG);
+    HANDLE_CASE(L2TPV3OIP);
+    HANDLE_CASE(PFCP);
+    HANDLE_CASE(ECPRI);
+    HANDLE_CASE(IPV6_FRAG_EXT);
+    HANDLE_CASE(GENEVE_OPT);
+    HANDLE_CASE(SFT);
+    HANDLE_CASE(INTEGRITY);
+    HANDLE_CASE(CONNTRACK);
+    HANDLE_CASE(FLEX);
+    HANDLE_CASE(GRE_OPTION);
+    HANDLE_CASE(PORT_REPRESENTOR);
+    HANDLE_CASE(REPRESENTED_PORT);
+    HANDLE_CASE(METER_COLOR);
+    HANDLE_CASE(QUOTA);
+    HANDLE_CASE(ICMP6_ECHO_REQUEST);
+    HANDLE_CASE(ICMP6_ECHO_REPLY);
+    default: return "UNKNOWN";
+    }
+}
+
+struct json_object *
+json_object_new_flow_item(const struct rte_flow_item *item)
+{
+    struct json_object * json_item = json_object_new_object();
+    if (!item)
+        return json_item;
+
+    json_object_object_add(json_item, "type", json_object_new_string(flow_item_type_name(item->type)));
+    // TODO: spec
+    if (item->spec)
+        json_object_object_add(json_item, "spec", json_object_new_object());
+    // TODO: last
+    if (item->last)
+        json_object_object_add(json_item, "last", json_object_new_object());
+    // TODO: mask
+    if (item->mask)
+        json_object_object_add(json_item, "mask", json_object_new_object());
+    return json_item;
+}
+
+struct json_object *
+json_object_new_flow_item_array(const struct rte_flow_item *pattern)
+{
+    struct json_object * json_pattern = json_object_new_array();
+    if (!pattern)
+        return json_pattern;
+
+    while (true)
+    {
+        json_object_array_add(json_pattern, json_object_new_flow_item(pattern));
+        if (pattern->type == RTE_FLOW_ITEM_TYPE_END)
+            break;
+        ++pattern;
+    }
+
+    return json_pattern;
 }
 
 struct rte_flow *
@@ -77,8 +216,11 @@ rte_flow_create(uint16_t port_id,
 		struct rte_flow_error *error)
 {
     struct json_object * f = json_object_new_function(__FUNCTION__);
-    struct json_object * args = json_object_new_object();
-    json_object_object_add(f, "arguments", args);
+    struct json_object * args = json_object_new_function_args(f);
+
+    json_object_object_add(args, "attr", json_object_new_flow_attr(attr));
+    json_object_object_add(args, "pattern", json_object_new_flow_item_array(pattern));
+
     struct rte_flow * res = (*p_rte_flow_create)(port_id, attr, pattern, actions, error);
     json_object_object_add(f, "return", json_object_new_uint64((intptr_t)res));
     json_object_end_function(f);

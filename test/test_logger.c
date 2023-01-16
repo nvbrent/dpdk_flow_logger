@@ -32,7 +32,9 @@ int main(int argc, char * argv[])
         { .type = RTE_FLOW_ACTION_TYPE_END, .conf = 0 },
     };
     struct rte_flow_error error;
-    struct rte_flow * flow = rte_flow_create(0, &attr, pattern, actions, &error);
+    uint16_t port_id = 0;
+    struct rte_flow * flow = rte_flow_create(port_id, &attr, pattern, actions, &error);
+    rte_flow_destroy(port_id, flow, &error);
 
     return 0;
 }
