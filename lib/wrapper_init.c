@@ -49,6 +49,11 @@ void load_wrappers(void)
     INIT_PFUNC(rte_eth_dev_count_avail, handle_ethdev);
     INIT_PFUNC(rte_flow_create, handle_ethdev);
     INIT_PFUNC(rte_flow_destroy, handle_ethdev);
+    INIT_PFUNC(rte_flow_flush, handle_ethdev);
+    INIT_PFUNC(rte_flow_action_handle_create, handle_ethdev);
+    INIT_PFUNC(rte_flow_action_handle_destroy, handle_ethdev);
+    INIT_PFUNC(rte_flow_action_handle_update, handle_ethdev);
+    INIT_PFUNC(rte_flow_configure, handle_ethdev);
 }
 
 void init_logger(void)

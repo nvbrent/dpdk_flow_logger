@@ -6,7 +6,12 @@ Currently, the only supported log format is JSON. In the future, testpmd format 
 
 ## Building
 
-Building reqires meson and json-c.
+Prerequisites:
+* meson
+* json-c
+* dpdk
+
+Note that dpdk_flow_logger should be built against the same release of DPDK which will be linked at runtime.
 
 ```bash
 meson build
