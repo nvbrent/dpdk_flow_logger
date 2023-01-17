@@ -164,6 +164,91 @@ flow_item_type_name(enum rte_flow_item_type type)
     }
 }
 
+const char *
+flow_action_type_name(enum rte_flow_action_type type)
+{
+    switch (type)
+    {
+#define HANDLE_CASE(s) case RTE_FLOW_ACTION_TYPE_ ## s: return #s
+    HANDLE_CASE(END);
+    HANDLE_CASE(VOID);
+    HANDLE_CASE(PASSTHRU);
+    HANDLE_CASE(JUMP);
+    HANDLE_CASE(MARK);
+    HANDLE_CASE(FLAG);
+    HANDLE_CASE(QUEUE);
+    HANDLE_CASE(DROP);
+    HANDLE_CASE(COUNT);
+    HANDLE_CASE(RSS);
+    HANDLE_CASE(PF);
+    HANDLE_CASE(VF);
+    HANDLE_CASE(PHY_PORT);
+    HANDLE_CASE(PORT_ID);
+    HANDLE_CASE(METER);
+    HANDLE_CASE(SECURITY);
+    HANDLE_CASE(OF_SET_MPLS_TTL);
+    HANDLE_CASE(OF_DEC_MPLS_TTL);
+    HANDLE_CASE(OF_SET_NW_TTL);
+    HANDLE_CASE(OF_DEC_NW_TTL);
+    HANDLE_CASE(OF_COPY_TTL_OUT);
+    HANDLE_CASE(OF_COPY_TTL_IN);
+    HANDLE_CASE(OF_POP_VLAN);
+    HANDLE_CASE(OF_PUSH_VLAN);
+    HANDLE_CASE(OF_SET_VLAN_VID);
+    HANDLE_CASE(OF_SET_VLAN_PCP);
+    HANDLE_CASE(OF_POP_MPLS);
+    HANDLE_CASE(OF_PUSH_MPLS);
+    HANDLE_CASE(VXLAN_ENCAP);
+    HANDLE_CASE(VXLAN_DECAP);
+    HANDLE_CASE(NVGRE_ENCAP);
+    HANDLE_CASE(NVGRE_DECAP);
+    HANDLE_CASE(RAW_ENCAP);
+    HANDLE_CASE(RAW_DECAP);
+    HANDLE_CASE(SET_IPV4_SRC);
+    HANDLE_CASE(SET_IPV4_DST);
+    HANDLE_CASE(SET_IPV6_SRC);
+    HANDLE_CASE(SET_IPV6_DST);
+    HANDLE_CASE(SET_TP_SRC);
+    HANDLE_CASE(SET_TP_DST);
+    HANDLE_CASE(MAC_SWAP);
+    HANDLE_CASE(DEC_TTL);
+    HANDLE_CASE(SET_TTL);
+    HANDLE_CASE(SET_MAC_SRC);
+    HANDLE_CASE(SET_MAC_DST);
+    HANDLE_CASE(INC_TCP_SEQ);
+    HANDLE_CASE(DEC_TCP_SEQ);
+    HANDLE_CASE(INC_TCP_ACK);
+    HANDLE_CASE(DEC_TCP_ACK);
+    HANDLE_CASE(SET_TAG);
+    HANDLE_CASE(SET_META);
+    HANDLE_CASE(SET_IPV4_DSCP);
+    HANDLE_CASE(SET_IPV6_DSCP);
+    HANDLE_CASE(AGE);
+    HANDLE_CASE(SAMPLE);
+    HANDLE_CASE(SHARED);
+    HANDLE_CASE(DEC_IPV4_TTL);
+    HANDLE_CASE(SET_IPV4_TTL);
+    HANDLE_CASE(DEC_IPV6_HOP);
+    HANDLE_CASE(SET_IPV6_HOP);
+    HANDLE_CASE(SET_UDP_TP_SRC);
+    HANDLE_CASE(SET_UDP_TP_DST);
+    HANDLE_CASE(SET_TCP_TP_SRC);
+    HANDLE_CASE(SET_TCP_TP_DST);
+    HANDLE_CASE(SFT);
+    HANDLE_CASE(MODIFY_FIELD);
+    HANDLE_CASE(CONNTRACK);
+    HANDLE_CASE(METER_COLOR);
+    HANDLE_CASE(INDIRECT);
+    HANDLE_CASE(PORT_REPRESENTOR);
+    HANDLE_CASE(REPRESENTED_PORT);
+    HANDLE_CASE(METER_MARK);
+    HANDLE_CASE(SEND_TO_KERNEL);
+    HANDLE_CASE(QUOTA);
+    default: return "UNKNOWN";
+#undef HANDLE_CASE
+    }
+}
+
 bool addr_bits_set(const uint8_t * addr_bytes, int n_addr_bytes)
 {
     for (int i=0; i<n_addr_bytes; i++)
@@ -409,6 +494,106 @@ json_object_new_flow_item_array(const struct rte_flow_item *pattern)
     return json_pattern;
 }
 
+struct json_object *
+json_object_new_flow_action_jump(const struct rte_flow_action_jump *jump)
+{
+    struct json_object * json_jump = json_object_new_object();
+    OPTIONAL_INT(jump, json_jump, group, );
+    return json_jump;
+}
+
+struct json_object *
+json_object_new_flow_action_mark(const struct rte_flow_action_mark *mark)
+{
+    struct json_object * json_mark = json_object_new_object();
+    OPTIONAL_INT(mark, json_mark, id, );
+    return json_mark;
+}
+
+struct json_object *
+json_object_new_flow_action_queue(const struct rte_flow_action_queue * queue)
+{
+    struct json_object * json_queue = json_object_new_object();
+    OPTIONAL_INT(queue, json_queue, index, );
+    return json_queue;
+}
+
+struct json_object *
+json_object_new_flow_action_count(const struct rte_flow_action_count * count)
+{
+    struct json_object * json_count = json_object_new_object();
+    OPTIONAL_FLAG(count, json_count, shared);
+    OPTIONAL_INT(count, json_count, id, );
+    return json_count;
+}
+
+struct json_object *
+json_object_new_flow_action_rss(const struct rte_flow_action_rss * rss)
+{
+    struct json_object * json_rss = json_object_new_object();
+    OPTIONAL_INT(rss, json_rss, func, );
+    OPTIONAL_INT(rss, json_rss, level, );
+    OPTIONAL_INT(rss, json_rss, types, );
+    OPTIONAL_INT(rss, json_rss, key_len, );
+    OPTIONAL_INT(rss, json_rss, queue_num, );
+
+    if (rss->queue) {
+        struct json_object * json_queue = json_object_new_array();
+        for (uint32_t i=0; i<rss->queue_num; i++)
+            json_object_array_add(json_queue, json_object_new_int(rss->queue[i]));
+        json_object_object_add(json_rss, "queue", json_queue);
+    }
+
+    return json_rss;
+}
+
+struct json_object *
+json_object_new_flow_action_conf(const struct rte_flow_action *action)
+{
+    switch (action->type)
+    {
+    case RTE_FLOW_ACTION_TYPE_JUMP: return json_object_new_flow_action_jump(action->conf);
+    case RTE_FLOW_ACTION_TYPE_MARK: return json_object_new_flow_action_mark(action->conf);
+    case RTE_FLOW_ACTION_TYPE_QUEUE: return json_object_new_flow_action_queue(action->conf);
+    case RTE_FLOW_ACTION_TYPE_COUNT: return json_object_new_flow_action_count(action->conf);
+    case RTE_FLOW_ACTION_TYPE_RSS: return json_object_new_flow_action_rss(action->conf);
+    default: break;
+    }
+
+    return json_object_new_object();
+}
+
+struct json_object *
+json_object_new_flow_action(const struct rte_flow_action *action)
+{
+    struct json_object * json_action = json_object_new_object();
+
+    json_object_object_add(json_action, "type", json_object_new_string(flow_action_type_name(action->type)));
+    
+    if (action->conf)
+        json_object_object_add(json_action, "conf", json_object_new_flow_action_conf(action));
+
+    return json_action;
+}
+
+struct json_object *
+json_object_new_flow_actions_array(const struct rte_flow_action *actions)
+{
+    struct json_object * json_action = json_object_new_array();
+    if (!actions)
+        return json_action;
+
+    while (true)
+    {
+        json_object_array_add(json_action, json_object_new_flow_action(actions));
+        if (actions->type == RTE_FLOW_ACTION_TYPE_END)
+            break;
+        ++actions;
+    }
+
+    return json_action;
+}
+
 struct rte_flow *
 rte_flow_create(uint16_t port_id,
 		const struct rte_flow_attr *attr,
@@ -421,6 +606,7 @@ rte_flow_create(uint16_t port_id,
 
     json_object_object_add(args, "attr", json_object_new_flow_attr(attr));
     json_object_object_add(args, "pattern", json_object_new_flow_item_array(pattern));
+    json_object_object_add(args, "actions", json_object_new_flow_actions_array(actions));
 
     struct rte_flow * res = (*p_rte_flow_create)(port_id, attr, pattern, actions, error);
     json_object_object_add(f, "return", json_object_new_uint64((intptr_t)res));

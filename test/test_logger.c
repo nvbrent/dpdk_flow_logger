@@ -78,9 +78,32 @@ int main(int argc, char * argv[])
         { .type = RTE_FLOW_ITEM_TYPE_UDP, .spec = &udp_spec, .mask = &rte_flow_item_udp_mask },
         { .type = RTE_FLOW_ITEM_TYPE_END },
     };
+
+    struct rte_flow_action_count count_conf = {
+        .shared = 1,
+        .id = 123,
+    };
+    struct rte_flow_action_jump jump_conf = {
+        .group = 7,
+    };
+    struct rte_flow_action_queue queue_conf = {
+        .index = 6,
+    };
+    uint16_t rss_queue_indices[] = { 5,6,7,8,9 };
+    struct rte_flow_action_rss rss_conf = {
+        .func = RTE_ETH_HASH_FUNCTION_SIMPLE_XOR,
+        .level = 1,
+        .types = ETH_RSS_PROTO_MASK,
+        .queue_num = 5,
+        .queue = rss_queue_indices
+    };
     struct rte_flow_action actions[] = {
-        { .type = RTE_FLOW_ACTION_TYPE_JUMP, .conf = 0 },
-        { .type = RTE_FLOW_ACTION_TYPE_END, .conf = 0 },
+        { .type = RTE_FLOW_ACTION_TYPE_COUNT, .conf = &count_conf },
+        { .type = RTE_FLOW_ACTION_TYPE_JUMP, .conf = &jump_conf },
+        { .type = RTE_FLOW_ACTION_TYPE_QUEUE, .conf = &queue_conf },
+        { .type = RTE_FLOW_ACTION_TYPE_RSS, .conf = &rss_conf },
+        { .type = RTE_FLOW_ACTION_TYPE_DROP },
+        { .type = RTE_FLOW_ACTION_TYPE_END },
     };
     struct rte_flow_error error;
     uint16_t port_id = 0;
