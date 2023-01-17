@@ -20,11 +20,12 @@ int main(int argc, char * argv[])
         .ingress = true,
         .transfer = true,
     };
-    struct rte_flow_item_eth eth_spec;
-    struct rte_flow_item_eth eth_mask;
+    struct rte_flow_item_eth eth_spec = { .src = { "\x11\x22\x33\x44\x55\x66" }, .type = RTE_BE16(0x8100) };
+    struct rte_flow_item_eth eth_last = { .src = { "\x11\x22\xFF\xFF\xFF\xFF" } };
+    struct rte_flow_item_eth eth_mask = { .src = { "\xFF\xFF\x00\x00\x00\x00" } };
     struct rte_flow_item pattern[] = {
         { .type = RTE_FLOW_ITEM_TYPE_VOID },
-        { .type = RTE_FLOW_ITEM_TYPE_ETH, .spec = &eth_spec, .mask = &eth_mask },
+        { .type = RTE_FLOW_ITEM_TYPE_ETH, .spec = &eth_spec, .last = &eth_last, .mask = &eth_mask },
         { .type = RTE_FLOW_ITEM_TYPE_END },
     };
     struct rte_flow_action actions[] = {

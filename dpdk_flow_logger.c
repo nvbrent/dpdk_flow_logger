@@ -167,7 +167,58 @@ flow_item_type_name(enum rte_flow_item_type t)
     HANDLE_CASE(ICMP6_ECHO_REQUEST);
     HANDLE_CASE(ICMP6_ECHO_REPLY);
     default: return "UNKNOWN";
+#undef HANDLE_CASE
     }
+}
+
+bool ether_addr_bits_set(const struct rte_ether_addr *addr)
+{
+    for (int i=0; i<RTE_ETHER_ADDR_LEN; i++)
+        if (addr->addr_bytes[i])
+            return true;
+    return false;
+}
+
+void ether_addr_format(const struct rte_ether_addr *addr, char *addr_str)
+{
+    sprintf(addr_str, "%02x:%02x:%02x:%02x:%02x:%02x",
+        addr->addr_bytes[0], addr->addr_bytes[1],
+        addr->addr_bytes[2], addr->addr_bytes[3],
+        addr->addr_bytes[4], addr->addr_bytes[5]);
+}
+
+struct json_object * 
+json_object_new_flow_item_eth(const struct rte_flow_item_eth *eth)
+{
+    struct json_object * json_eth = json_object_new_object();
+
+    char mac_addr[32];
+    if (ether_addr_bits_set(&eth->dst)) {
+        ether_addr_format(&eth->dst, mac_addr);
+        json_object_object_add(json_eth, "dst", json_object_new_string(mac_addr));
+    }
+    if (ether_addr_bits_set(&eth->src)) {
+        ether_addr_format(&eth->src, mac_addr);
+        json_object_object_add(json_eth, "src", json_object_new_string(mac_addr));
+    }
+    if (eth->type)
+        json_object_object_add(json_eth, "type", json_object_new_int(RTE_BE16(eth->type)));
+    if (eth->has_vlan)
+        json_object_object_add(json_eth, "has_vlan", json_object_new_boolean(eth->has_vlan));
+
+    return json_eth;
+}
+
+struct json_object *
+json_object_new_flow_item_spec(enum rte_flow_item_type t, const void *p)
+{
+    switch (t)
+    {
+    case RTE_FLOW_ITEM_TYPE_ETH: return json_object_new_flow_item_eth(p);
+    default:
+        break;
+    }
+    return json_object_new_object();
 }
 
 struct json_object *
@@ -178,15 +229,16 @@ json_object_new_flow_item(const struct rte_flow_item *item)
         return json_item;
 
     json_object_object_add(json_item, "type", json_object_new_string(flow_item_type_name(item->type)));
+
     // TODO: spec
     if (item->spec)
-        json_object_object_add(json_item, "spec", json_object_new_object());
+        json_object_object_add(json_item, "spec", json_object_new_flow_item_spec(item->type, item->spec));
     // TODO: last
     if (item->last)
-        json_object_object_add(json_item, "last", json_object_new_object());
+        json_object_object_add(json_item, "last", json_object_new_flow_item_spec(item->type, item->last));
     // TODO: mask
     if (item->mask)
-        json_object_object_add(json_item, "mask", json_object_new_object());
+        json_object_object_add(json_item, "mask", json_object_new_flow_item_spec(item->type, item->mask));
     return json_item;
 }
 
