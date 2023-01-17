@@ -43,6 +43,18 @@ json_object_new_flow_indir_action_conf(const struct rte_flow_indir_action_conf *
 struct json_object *
 json_object_new_flow_pattern_template_attr(const struct rte_flow_pattern_template_attr *attr);
 
+struct json_object *
+json_object_new_flow_actions_template_attr(const struct rte_flow_actions_template_attr *attr);
+
+struct json_object *
+json_object_new_flow_template_table_attr(const struct rte_flow_template_table_attr *attr);
+
+const char *
+rte_flow_table_insertion_type_name(enum rte_flow_table_insertion_type type);
+
+const char *
+rte_flow_table_hash_func_name(enum rte_flow_table_hash_func type);
+
 const char *
 flow_item_type_name(enum rte_flow_item_type type);
 

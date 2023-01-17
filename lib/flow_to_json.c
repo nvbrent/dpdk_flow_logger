@@ -37,6 +37,27 @@ json_object_new_flow_pattern_template_attr(const struct rte_flow_pattern_templat
     return json_attr;
 }
 
+struct json_object *
+json_object_new_flow_actions_template_attr(const struct rte_flow_actions_template_attr *attr)
+{
+    struct json_object * json_attr = json_object_new_object();
+    OPTIONAL_FLAG(attr, json_attr, ingress);
+    OPTIONAL_FLAG(attr, json_attr, egress);
+    OPTIONAL_FLAG(attr, json_attr, transfer);
+    return json_attr;
+}
+
+struct json_object *
+json_object_new_flow_template_table_attr(const struct rte_flow_template_table_attr *attr)
+{
+    struct json_object * json_attr = json_object_new_object();
+    json_object_object_add(json_attr, "flow_attr", json_object_new_flow_attr(&attr->flow_attr));
+    OPTIONAL_INT(attr, json_attr, nb_flows, );
+    json_object_object_add(json_attr, "insertion_type", json_object_new_string(rte_flow_table_insertion_type_name(attr->insertion_type)));
+    json_object_object_add(json_attr, "hash_func", json_object_new_string(rte_flow_table_hash_func_name(attr->hash_func)));
+    return json_attr;
+}
+
 const char *
 flow_item_type_name(enum rte_flow_item_type type)
 {
@@ -193,6 +214,34 @@ flow_action_type_name(enum rte_flow_action_type type)
     HANDLE_CASE(METER_MARK);
     HANDLE_CASE(SEND_TO_KERNEL);
     HANDLE_CASE(QUOTA);
+    default: return "UNKNOWN";
+#undef HANDLE_CASE
+    }
+}
+
+const char *
+rte_flow_table_insertion_type_name(enum rte_flow_table_insertion_type type)
+{
+    switch (type)
+    {
+#define HANDLE_CASE(s) case RTE_FLOW_TABLE_INSERTION_TYPE_ ## s: return #s
+    HANDLE_CASE(PATTERN);
+    HANDLE_CASE(INDEX);
+    default: return "UNKNOWN";
+#undef HANDLE_CASE
+    }
+}
+
+const char *
+rte_flow_table_hash_func_name(enum rte_flow_table_hash_func type)
+{
+    switch (type)
+    {
+#define HANDLE_CASE(s) case RTE_FLOW_TABLE_HASH_FUNC_ ## s: return #s
+    HANDLE_CASE(DEFAULT);
+    HANDLE_CASE(LINEAR);
+    HANDLE_CASE(CRC32);
+    HANDLE_CASE(CRC16);
     default: return "UNKNOWN";
 #undef HANDLE_CASE
     }

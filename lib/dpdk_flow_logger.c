@@ -175,7 +175,146 @@ rte_flow_configure(uint16_t port_id,
     return res;
 }
 
-// Wrapper functions from misc
+struct rte_flow_pattern_template *
+rte_flow_pattern_template_create(uint16_t port_id,
+		const struct rte_flow_pattern_template_attr *template_attr,
+		const struct rte_flow_item pattern[],
+		struct rte_flow_error *error)
+{
+    struct json_object * f = json_object_new_function(__FUNCTION__);
+    struct json_object * args = json_object_new_function_args(f);
+
+    json_object_object_add(args, "port_id", json_object_new_int(port_id));
+
+    if (template_attr)
+        json_object_object_add(args, "template_attr", json_object_new_flow_pattern_template_attr(template_attr));
+    
+    json_object_object_add(args, "pattern", json_object_new_flow_item_array(pattern));
+
+    struct rte_flow_pattern_template * res = (*p_rte_flow_pattern_template_create)(port_id, template_attr, pattern, error);
+    json_object_object_add(f, "return", json_object_new_uint64((intptr_t)res));
+    json_object_end_function(f);
+    return res;
+}
+
+int
+rte_flow_pattern_template_destroy(uint16_t port_id,
+		struct rte_flow_pattern_template *pattern_template,
+		struct rte_flow_error *error)
+{
+    struct json_object * f = json_object_new_function(__FUNCTION__);
+    struct json_object * args = json_object_new_function_args(f);
+
+    json_object_object_add(args, "port_id", json_object_new_int(port_id));
+
+    if (pattern_template)
+        json_object_object_add(args, "pattern_template", json_object_new_uint64((intptr_t)pattern_template));
+
+    int res = (*p_rte_flow_pattern_template_destroy)(port_id, pattern_template, error);
+    json_object_object_add(f, "return", json_object_new_int(res));
+    json_object_end_function(f);
+    return res;
+}
+
+struct rte_flow_actions_template *
+rte_flow_actions_template_create(uint16_t port_id,
+		const struct rte_flow_actions_template_attr *template_attr,
+		const struct rte_flow_action actions[],
+		const struct rte_flow_action masks[],
+		struct rte_flow_error *error)
+{
+    struct json_object * f = json_object_new_function(__FUNCTION__);
+    struct json_object * args = json_object_new_function_args(f);
+
+    json_object_object_add(args, "port_id", json_object_new_int(port_id));
+
+    if (template_attr)
+        json_object_object_add(args, "template_attr", json_object_new_flow_actions_template_attr(template_attr));
+    
+    json_object_object_add(args, "actions", json_object_new_flow_actions_array(actions));
+    json_object_object_add(args, "masks", json_object_new_flow_actions_array(masks));
+
+    struct rte_flow_actions_template * res = (*p_rte_flow_actions_template_create)(port_id, template_attr, actions, masks, error);
+    json_object_object_add(f, "return", json_object_new_uint64((intptr_t)res));
+    json_object_end_function(f);
+    return res;
+}
+
+int
+rte_flow_actions_template_destroy(uint16_t port_id,
+		struct rte_flow_actions_template *actions_template,
+		struct rte_flow_error *error)
+{
+    struct json_object * f = json_object_new_function(__FUNCTION__);
+    struct json_object * args = json_object_new_function_args(f);
+
+    json_object_object_add(args, "port_id", json_object_new_int(port_id));
+
+    if (actions_template)
+        json_object_object_add(args, "actions_template", json_object_new_uint64((intptr_t)actions_template));
+
+    int res = (*p_rte_flow_actions_template_destroy)(port_id, actions_template, error);
+    json_object_object_add(f, "return", json_object_new_int(res));
+    json_object_end_function(f);
+    return res;
+}
+
+struct rte_flow_template_table *
+rte_flow_template_table_create(uint16_t port_id,
+		const struct rte_flow_template_table_attr *table_attr,
+		struct rte_flow_pattern_template *pattern_templates[],
+		uint8_t nb_pattern_templates,
+		struct rte_flow_actions_template *actions_templates[],
+		uint8_t nb_actions_templates,
+		struct rte_flow_error *error)
+{
+    struct json_object * f = json_object_new_function(__FUNCTION__);
+    struct json_object * args = json_object_new_function_args(f);
+
+    json_object_object_add(args, "port_id", json_object_new_int(port_id));
+
+    if (table_attr)
+        json_object_object_add(args, "table_attr", json_object_new_flow_template_table_attr(table_attr));
+
+    json_object * json_pattern_templates = json_object_new_array();
+    for (uint32_t i=0; i<nb_pattern_templates; i++)
+        json_object_array_add(json_pattern_templates, json_object_new_uint64((intptr_t)pattern_templates[i]));
+    json_object_object_add(args, "pattern_templates", json_pattern_templates);
+
+    json_object * json_actions_templates = json_object_new_array();
+    for (uint32_t i=0; i<nb_actions_templates; i++)
+        json_object_array_add(json_actions_templates, json_object_new_uint64((intptr_t)actions_templates[i]));
+    json_object_object_add(args, "actions_templates", json_actions_templates);
+
+    struct rte_flow_template_table * res = (*p_rte_flow_template_table_create)(
+        port_id, table_attr, 
+        pattern_templates, nb_pattern_templates, 
+        actions_templates, nb_actions_templates, error);
+    json_object_object_add(f, "return", json_object_new_uint64((intptr_t)res));
+    json_object_end_function(f);
+    return res;
+}
+
+int
+rte_flow_template_table_destroy(uint16_t port_id,
+		struct rte_flow_template_table *template_table,
+		struct rte_flow_error *error)
+{
+    struct json_object * f = json_object_new_function(__FUNCTION__);
+    struct json_object * args = json_object_new_function_args(f);
+
+    json_object_object_add(args, "port_id", json_object_new_int(port_id));
+
+    if (template_table)
+        json_object_object_add(args, "template_table", json_object_new_uint64((intptr_t)template_table));
+
+    int res = (*p_rte_flow_template_table_destroy)(port_id, template_table, error);
+    json_object_object_add(f, "return", json_object_new_int(res));
+    json_object_end_function(f);
+    return res;
+}
+
+// Wrapper functions from rte_eal.h:
 
 int rte_eal_init(int argc, char **argv)
 {
@@ -193,6 +332,8 @@ int rte_eal_init(int argc, char **argv)
     json_object_end_function(f);
     return res;
 }
+
+// Wrapper functions from rte_ethdev.h
 
 uint16_t rte_eth_dev_count_avail(void)
 {

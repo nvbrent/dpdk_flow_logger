@@ -21,3 +21,10 @@ DECL_PFUNC(rte_flow_action_handle_create);
 DECL_PFUNC(rte_flow_action_handle_destroy);
 DECL_PFUNC(rte_flow_action_handle_update);
 DECL_PFUNC(rte_flow_configure);
+DECL_PFUNC(rte_flow_pattern_template_create);
+DECL_PFUNC(rte_flow_pattern_template_destroy);
+DECL_PFUNC(rte_flow_actions_template_create);
+DECL_PFUNC(rte_flow_actions_template_destroy);
+DECL_PFUNC(rte_flow_template_table_create);
+DECL_PFUNC(rte_flow_template_table_destroy);
+
