@@ -52,6 +52,21 @@ int main(int argc, char * argv[])
             .dst_addr = RTE_BE32(0xc0636363),
         }
     };
+    struct rte_flow_item_tcp tcp_spec = {
+        .hdr = {
+            .src_port = RTE_BE16(4444),
+            .dst_port = RTE_BE16(5555),
+            .fin = 1,
+            .syn = 1,
+            .rst = 1,
+        }
+    };
+    struct rte_flow_item_udp udp_spec = {
+        .hdr = {
+            .src_port = RTE_BE16(6666),
+            .dst_port = RTE_BE16(7777),
+        }
+    };
     struct rte_flow_item pattern[] = {
         { .type = RTE_FLOW_ITEM_TYPE_VOID },
         { .type = RTE_FLOW_ITEM_TYPE_ETH, .spec = &eth_spec, .last = &eth_last, .mask = &eth_mask },
@@ -59,6 +74,8 @@ int main(int argc, char * argv[])
         { .type = RTE_FLOW_ITEM_TYPE_IPV6, .spec = &ipv6_spec, .mask = &rte_flow_item_ipv6_mask },
         { .type = RTE_FLOW_ITEM_TYPE_VXLAN, .spec = &vxlan_spec, .mask = &rte_flow_item_vxlan_mask },
         { .type = RTE_FLOW_ITEM_TYPE_IPV4, .spec = &ipv4_spec, .mask = &rte_flow_item_ipv4_mask },
+        { .type = RTE_FLOW_ITEM_TYPE_TCP, .spec = &tcp_spec, .mask = &rte_flow_item_tcp_mask },
+        { .type = RTE_FLOW_ITEM_TYPE_UDP, .spec = &udp_spec, .mask = &rte_flow_item_udp_mask },
         { .type = RTE_FLOW_ITEM_TYPE_END },
     };
     struct rte_flow_action actions[] = {

@@ -310,6 +310,50 @@ json_object_new_flow_item_vxlan(const struct rte_flow_item_vxlan * vxlan)
 }
 
 struct json_object *
+json_object_new_flow_item_tcp(const struct rte_flow_item_tcp * tcp)
+{
+    const struct rte_tcp_hdr *hdr = &tcp->hdr;
+    struct json_object * json_tcp = json_object_new_object();
+    struct json_object * json_hdr = json_object_new_object();
+
+    OPTIONAL_INT(hdr, json_hdr, src_port, RTE_BE16);
+    OPTIONAL_INT(hdr, json_hdr, dst_port, RTE_BE16);
+    OPTIONAL_INT(hdr, json_hdr, sent_seq, RTE_BE32);
+    OPTIONAL_INT(hdr, json_hdr, recv_ack, RTE_BE32);
+    OPTIONAL_INT(hdr, json_hdr, dt_off, );
+    OPTIONAL_FLAG(hdr, json_hdr, fin);
+    OPTIONAL_FLAG(hdr, json_hdr, syn);
+    OPTIONAL_FLAG(hdr, json_hdr, rst);
+    OPTIONAL_FLAG(hdr, json_hdr, psh);
+    OPTIONAL_FLAG(hdr, json_hdr, ack);
+    OPTIONAL_FLAG(hdr, json_hdr, urg);
+    OPTIONAL_FLAG(hdr, json_hdr, ecne);
+    OPTIONAL_FLAG(hdr, json_hdr, cwr);
+    OPTIONAL_INT(hdr, json_hdr, rx_win, RTE_BE16);
+    OPTIONAL_INT(hdr, json_hdr, cksum, RTE_BE16);
+    OPTIONAL_INT(hdr, json_hdr, tcp_urp, RTE_BE16);
+    json_object_object_add(json_tcp, "hdr", json_hdr);
+
+    return json_tcp;
+}
+
+struct json_object *
+json_object_new_flow_item_udp(const struct rte_flow_item_udp * udp)
+{
+    const struct rte_udp_hdr *hdr = &udp->hdr;
+    struct json_object * json_udp = json_object_new_object();
+    struct json_object * json_hdr = json_object_new_object();
+
+    OPTIONAL_INT(hdr, json_hdr, src_port, RTE_BE16);
+    OPTIONAL_INT(hdr, json_hdr, dst_port, RTE_BE16);
+    OPTIONAL_INT(hdr, json_hdr, dgram_len, RTE_BE16);
+    OPTIONAL_INT(hdr, json_hdr, dgram_cksum, RTE_BE16);
+    json_object_object_add(json_udp, "hdr", json_hdr);
+
+    return json_udp;
+}
+
+struct json_object *
 json_object_new_flow_item_spec(enum rte_flow_item_type type, const void *p)
 {
     switch (type)
@@ -319,6 +363,8 @@ json_object_new_flow_item_spec(enum rte_flow_item_type type, const void *p)
     case RTE_FLOW_ITEM_TYPE_IPV4: return json_object_new_flow_item_ipv4(p);
     case RTE_FLOW_ITEM_TYPE_IPV6: return json_object_new_flow_item_ipv6(p);
     case RTE_FLOW_ITEM_TYPE_VXLAN: return json_object_new_flow_item_vxlan(p);
+    case RTE_FLOW_ITEM_TYPE_TCP: return json_object_new_flow_item_tcp(p);
+    case RTE_FLOW_ITEM_TYPE_UDP: return json_object_new_flow_item_udp(p);
     default:
         break;
     }
@@ -336,8 +382,10 @@ json_object_new_flow_item(const struct rte_flow_item *item)
 
     if (item->spec)
         json_object_object_add(json_item, "spec", json_object_new_flow_item_spec(item->type, item->spec));
+
     if (item->last)
         json_object_object_add(json_item, "last", json_object_new_flow_item_spec(item->type, item->last));
+
     if (item->mask)
         json_object_object_add(json_item, "mask", json_object_new_flow_item_spec(item->type, item->mask));
     return json_item;
