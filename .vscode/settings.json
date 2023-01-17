@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "dlfcn.h": "c"
+        "dlfcn.h": "c",
+        "compare": "c",
+        "type_traits": "c"
     }
 }

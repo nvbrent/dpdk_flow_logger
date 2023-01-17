@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <dlfcn.h>
+#include <arpa/inet.h>
 
 #include <json-c/json.h>
 
@@ -163,12 +164,17 @@ flow_item_type_name(enum rte_flow_item_type type)
     }
 }
 
-bool ether_addr_bits_set(const struct rte_ether_addr *addr)
+bool addr_bits_set(const uint8_t * addr_bytes, int n_addr_bytes)
 {
-    for (int i=0; i<RTE_ETHER_ADDR_LEN; i++)
-        if (addr->addr_bytes[i])
+    for (int i=0; i<n_addr_bytes; i++)
+        if (addr_bytes[i])
             return true;
     return false;
+}
+
+bool ether_addr_bits_set(const struct rte_ether_addr *addr)
+{
+    return addr_bits_set(addr->addr_bytes, RTE_ETHER_ADDR_LEN);
 }
 
 void ether_addr_format(const struct rte_ether_addr *addr, char *addr_str)
@@ -179,34 +185,140 @@ void ether_addr_format(const struct rte_ether_addr *addr, char *addr_str)
         addr->addr_bytes[4], addr->addr_bytes[5]);
 }
 
+bool ipv6_addr_bits_set(const uint8_t addr[])
+{
+    return addr_bits_set(addr, 16);
+}
+
+#define OPTIONAL_MAC(flow_item, json_item, field) \
+    if (ether_addr_bits_set(&flow_item->field)) { \
+        char addr[32]; \
+        ether_addr_format(&flow_item->field, addr); \
+        json_object_object_add(json_item, #field, json_object_new_string(addr)); \
+    }
+
+#define OPTIONAL_IPV4(flow_item, json_item, field) \
+    if (flow_item->field) { \
+        char addr[INET_ADDRSTRLEN]; \
+        inet_ntop(AF_INET, &flow_item->field, addr, INET_ADDRSTRLEN); \
+        json_object_object_add(json_item, #field, json_object_new_string(addr)); \
+    }
+
+#define OPTIONAL_IPV6(flow_item, json_item, field) \
+    if (ipv6_addr_bits_set(flow_item->field)) { \
+        char addr[INET6_ADDRSTRLEN]; \
+        inet_ntop(AF_INET6, &flow_item->field, addr, INET6_ADDRSTRLEN); \
+        json_object_object_add(json_item, #field, json_object_new_string(addr)); \
+    }
+
+#define OPTIONAL_INT(flow_item, json_item, field, ENDIAN_OP) \
+    if (flow_item->field) \
+        json_object_object_add(json_item, #field, json_object_new_int(ENDIAN_OP(flow_item->field)))
+
+#define OPTIONAL_FLAG(flow_item, json_item, field) \
+    if (flow_item->field) \
+        json_object_object_add(json_item, #field, json_object_new_boolean(flow_item->field))
+
 struct json_object * 
 json_object_new_flow_item_eth(const struct rte_flow_item_eth *eth)
 {
     struct json_object * json_eth = json_object_new_object();
 
-    char mac_addr[32];
-    if (ether_addr_bits_set(&eth->dst)) {
-        ether_addr_format(&eth->dst, mac_addr);
-        json_object_object_add(json_eth, "dst", json_object_new_string(mac_addr));
-    }
-    if (ether_addr_bits_set(&eth->src)) {
-        ether_addr_format(&eth->src, mac_addr);
-        json_object_object_add(json_eth, "src", json_object_new_string(mac_addr));
-    }
-    if (eth->type)
-        json_object_object_add(json_eth, "type", json_object_new_int(RTE_BE16(eth->type)));
-    if (eth->has_vlan)
-        json_object_object_add(json_eth, "has_vlan", json_object_new_boolean(eth->has_vlan));
+    OPTIONAL_MAC(eth, json_eth, dst);
+    OPTIONAL_MAC(eth, json_eth, src);
+    OPTIONAL_INT(eth, json_eth, type, RTE_BE16);
+    OPTIONAL_FLAG(eth, json_eth, has_vlan);
 
     return json_eth;
 }
 
 struct json_object *
-json_object_new_flow_item_spec(enum rte_flow_item_type t, const void *p)
+json_object_new_flow_item_vlan(const struct rte_flow_item_vlan *vlan)
 {
-    switch (t)
+    struct json_object * json_vlan = json_object_new_object();
+    OPTIONAL_INT(vlan, json_vlan, tci, RTE_BE16);
+    OPTIONAL_INT(vlan, json_vlan, inner_type, RTE_BE16);
+    OPTIONAL_FLAG(vlan, json_vlan, has_more_vlan);
+
+    return json_vlan;
+}
+
+struct json_object *
+json_object_new_flow_item_ipv4(const struct rte_flow_item_ipv4 * ipv4)
+{
+    const struct rte_ipv4_hdr *hdr = &ipv4->hdr;
+    struct json_object * json_ipv4 = json_object_new_object();
+    
+    struct json_object * json_hdr = json_object_new_object();
+    OPTIONAL_INT(hdr, json_hdr, ihl, );
+    OPTIONAL_INT(hdr, json_hdr, version, );
+    OPTIONAL_INT(hdr, json_hdr, type_of_service, );
+    OPTIONAL_INT(hdr, json_hdr, total_length, RTE_BE16);
+    OPTIONAL_INT(hdr, json_hdr, packet_id, RTE_BE16);
+    OPTIONAL_INT(hdr, json_hdr, fragment_offset, RTE_BE16);
+    OPTIONAL_INT(hdr, json_hdr, time_to_live, );
+    OPTIONAL_INT(hdr, json_hdr, next_proto_id, );
+    OPTIONAL_INT(hdr, json_hdr, hdr_checksum, RTE_BE16);
+    OPTIONAL_IPV4(hdr, json_hdr, src_addr);
+    OPTIONAL_IPV4(hdr, json_hdr, dst_addr);
+    json_object_object_add(json_ipv4, "hdr", json_hdr);
+    
+    return json_ipv4;
+}
+
+struct json_object *
+json_object_new_flow_item_ipv6(const struct rte_flow_item_ipv6 * ipv6)
+{
+    const struct rte_ipv6_hdr *hdr = &ipv6->hdr;
+    struct json_object * json_ipv6 = json_object_new_object();
+    struct json_object * json_hdr = json_object_new_object();
+
+
+    OPTIONAL_INT(hdr, json_hdr, vtc_flow, RTE_BE32);
+    OPTIONAL_INT(hdr, json_hdr, payload_len, RTE_BE16);
+    OPTIONAL_INT(hdr, json_hdr, proto, );
+    OPTIONAL_INT(hdr, json_hdr, hop_limits, );
+    OPTIONAL_IPV6(hdr, json_hdr, src_addr);
+    OPTIONAL_IPV6(hdr, json_hdr, dst_addr);
+    json_object_object_add(json_ipv6, "hdr", json_hdr);
+
+    OPTIONAL_FLAG(ipv6, json_hdr, has_hop_ext);
+    OPTIONAL_FLAG(ipv6, json_hdr, has_route_ext);
+    OPTIONAL_FLAG(ipv6, json_hdr, has_frag_ext);
+    OPTIONAL_FLAG(ipv6, json_hdr, has_auth_ext);
+    OPTIONAL_FLAG(ipv6, json_hdr, has_esp_ext);
+    OPTIONAL_FLAG(ipv6, json_hdr, has_dest_ext);
+    OPTIONAL_FLAG(ipv6, json_hdr, has_mobil_ext);
+    OPTIONAL_FLAG(ipv6, json_hdr, has_hip_ext);
+    OPTIONAL_FLAG(ipv6, json_hdr, has_shim6_ext);
+
+    return json_ipv6;
+}
+
+struct json_object *
+json_object_new_flow_item_vxlan(const struct rte_flow_item_vxlan * vxlan)
+{
+    struct json_object * json_vxlan = json_object_new_object();
+
+    OPTIONAL_INT(vxlan, json_vxlan, flags, );
+
+    rte_be32_t vni = (vxlan->vni[0] << 16) | (vxlan->vni[1] << 8) | vxlan->vni[2];
+    if (vni)
+        json_object_object_add(json_vxlan, "vni", json_object_new_int(vni));
+
+    return json_vxlan;
+}
+
+struct json_object *
+json_object_new_flow_item_spec(enum rte_flow_item_type type, const void *p)
+{
+    switch (type)
     {
     case RTE_FLOW_ITEM_TYPE_ETH: return json_object_new_flow_item_eth(p);
+    case RTE_FLOW_ITEM_TYPE_VLAN: return json_object_new_flow_item_vlan(p);
+    case RTE_FLOW_ITEM_TYPE_IPV4: return json_object_new_flow_item_ipv4(p);
+    case RTE_FLOW_ITEM_TYPE_IPV6: return json_object_new_flow_item_ipv6(p);
+    case RTE_FLOW_ITEM_TYPE_VXLAN: return json_object_new_flow_item_vxlan(p);
     default:
         break;
     }
@@ -222,13 +334,10 @@ json_object_new_flow_item(const struct rte_flow_item *item)
 
     json_object_object_add(json_item, "type", json_object_new_string(flow_item_type_name(item->type)));
 
-    // TODO: spec
     if (item->spec)
         json_object_object_add(json_item, "spec", json_object_new_flow_item_spec(item->type, item->spec));
-    // TODO: last
     if (item->last)
         json_object_object_add(json_item, "last", json_object_new_flow_item_spec(item->type, item->last));
-    // TODO: mask
     if (item->mask)
         json_object_object_add(json_item, "mask", json_object_new_flow_item_spec(item->type, item->mask));
     return json_item;
