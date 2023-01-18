@@ -27,4 +27,9 @@ DECL_PFUNC(rte_flow_actions_template_create);
 DECL_PFUNC(rte_flow_actions_template_destroy);
 DECL_PFUNC(rte_flow_template_table_create);
 DECL_PFUNC(rte_flow_template_table_destroy);
+DECL_PFUNC(rte_flow_async_create);
+DECL_PFUNC(rte_flow_async_create_by_index);
+DECL_PFUNC(rte_flow_async_destroy);
+DECL_PFUNC(rte_flow_push);
+DECL_PFUNC(rte_flow_pull);
 

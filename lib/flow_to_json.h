@@ -49,6 +49,9 @@ json_object_new_flow_actions_template_attr(const struct rte_flow_actions_templat
 struct json_object *
 json_object_new_flow_template_table_attr(const struct rte_flow_template_table_attr *attr);
 
+struct json_object *
+json_object_new_flow_op_attr(const struct rte_flow_op_attr *op_attr);
+
 const char *
 rte_flow_table_insertion_type_name(enum rte_flow_table_insertion_type type);
 
@@ -128,3 +131,9 @@ json_object_new_flow_port_attr(const struct rte_flow_port_attr *attr);
 
 struct json_object *
 json_object_new_flow_queue_attr_list(uint16_t nb_queue, const struct rte_flow_queue_attr *attr[]);
+
+struct json_object *
+json_object_new_flow_op_result(const struct rte_flow_op_result *res);
+
+struct json_object *
+json_object_new_flow_op_result_list(uint16_t n_res, const struct rte_flow_op_result res[]);

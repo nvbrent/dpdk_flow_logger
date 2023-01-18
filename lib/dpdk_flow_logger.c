@@ -314,6 +314,145 @@ rte_flow_template_table_destroy(uint16_t port_id,
     return res;
 }
 
+struct rte_flow *
+rte_flow_async_create(uint16_t port_id,
+		      uint32_t queue_id,
+		      const struct rte_flow_op_attr *op_attr,
+		      struct rte_flow_template_table *template_table,
+		      const struct rte_flow_item pattern[],
+		      uint8_t pattern_template_index,
+		      const struct rte_flow_action actions[],
+		      uint8_t actions_template_index,
+		      void *user_data,
+		      struct rte_flow_error *error)
+{
+    struct json_object * f = json_object_new_function(__FUNCTION__);
+    struct json_object * args = json_object_new_function_args(f);
+
+    json_object_object_add(args, "port_id", json_object_new_int(port_id));
+    json_object_object_add(args, "queue_id", json_object_new_int(queue_id));
+
+    if (op_attr)
+        json_object_object_add(args, "op_attr", json_object_new_flow_op_attr(op_attr));
+
+    json_object_object_add(args, "pattern", json_object_new_flow_item_array(pattern));
+    json_object_object_add(args, "pattern_template_index", json_object_new_int(pattern_template_index));
+    json_object_object_add(args, "actions", json_object_new_flow_actions_array(actions));
+    json_object_object_add(args, "actions_template_index", json_object_new_int(actions_template_index));
+    json_object_object_add(args, "user_data", json_object_new_uint64((intptr_t)user_data));
+
+    struct rte_flow * res = (*p_rte_flow_async_create)(
+        port_id, queue_id, op_attr, template_table,
+        pattern, pattern_template_index,
+        actions, actions_template_index,
+        user_data, error);
+    json_object_object_add(f, "return", json_object_new_uint64((intptr_t)res));
+    json_object_end_function(f);
+    return res;
+}
+
+struct rte_flow *
+rte_flow_async_create_by_index(uint16_t port_id,
+		      uint32_t queue_id,
+		      const struct rte_flow_op_attr *op_attr,
+		      struct rte_flow_template_table *template_table,
+		      uint32_t rule_index,
+		      const struct rte_flow_action actions[],
+		      uint8_t actions_template_index,
+		      void *user_data,
+		      struct rte_flow_error *error)
+{
+    struct json_object * f = json_object_new_function(__FUNCTION__);
+    struct json_object * args = json_object_new_function_args(f);
+
+    json_object_object_add(args, "port_id", json_object_new_int(port_id));
+    json_object_object_add(args, "queue_id", json_object_new_int(queue_id));
+
+    if (op_attr)
+        json_object_object_add(args, "op_attr", json_object_new_flow_op_attr(op_attr));
+
+    json_object_object_add(args, "template_table", json_object_new_uint64((intptr_t)template_table));
+    json_object_object_add(args, "rule_index", json_object_new_int(rule_index));
+    json_object_object_add(args, "actions", json_object_new_flow_actions_array(actions));
+    json_object_object_add(args, "actions_template_index", json_object_new_int(actions_template_index));
+    json_object_object_add(args, "user_data", json_object_new_uint64((intptr_t)user_data));
+
+    struct rte_flow * res = (*p_rte_flow_async_create_by_index)(
+        port_id, queue_id, op_attr, template_table,
+        rule_index,
+        actions, actions_template_index,
+        user_data, error);
+    json_object_object_add(f, "return", json_object_new_uint64((intptr_t)res));
+    json_object_end_function(f);
+    return res;
+}
+
+int
+rte_flow_async_destroy(uint16_t port_id,
+		       uint32_t queue_id,
+		       const struct rte_flow_op_attr *op_attr,
+		       struct rte_flow *flow,
+		       void *user_data,
+		       struct rte_flow_error *error)
+{
+    struct json_object * f = json_object_new_function(__FUNCTION__);
+    struct json_object * args = json_object_new_function_args(f);
+
+    json_object_object_add(args, "port_id", json_object_new_int(port_id));
+    json_object_object_add(args, "queue_id", json_object_new_int(queue_id));
+
+    if (op_attr)
+        json_object_object_add(args, "op_attr", json_object_new_flow_op_attr(op_attr));
+
+    json_object_object_add(args, "flow", json_object_new_uint64((intptr_t)flow));
+    json_object_object_add(args, "user_data", json_object_new_uint64((intptr_t)user_data));
+
+    int32_t res = (*p_rte_flow_async_destroy)(
+        port_id, queue_id, op_attr, flow,
+        user_data, error);
+    json_object_object_add(f, "return", json_object_new_int(res));
+    json_object_end_function(f);
+    return res;
+}
+
+int
+rte_flow_push(uint16_t port_id,
+	      uint32_t queue_id,
+	      struct rte_flow_error *error)
+{
+    struct json_object * f = json_object_new_function(__FUNCTION__);
+    struct json_object * args = json_object_new_function_args(f);
+
+    json_object_object_add(args, "port_id", json_object_new_int(port_id));
+    json_object_object_add(args, "queue_id", json_object_new_int(queue_id));
+
+    int32_t res = (*p_rte_flow_push)(port_id, queue_id, error);
+    json_object_object_add(f, "return", json_object_new_int(res));
+    json_object_end_function(f);
+    return res;
+}
+
+int
+rte_flow_pull(uint16_t port_id,
+	      uint32_t queue_id,
+	      struct rte_flow_op_result res[],
+	      uint16_t n_res,
+	      struct rte_flow_error *error)
+{
+    struct json_object * f = json_object_new_function(__FUNCTION__);
+    struct json_object * args = json_object_new_function_args(f);
+
+    json_object_object_add(args, "port_id", json_object_new_int(port_id));
+    json_object_object_add(args, "queue_id", json_object_new_int(queue_id));
+    json_object_object_add(args, "n_res", json_object_new_int(n_res));
+
+    int32_t n_res_written = (*p_rte_flow_pull)(port_id, queue_id, res, n_res, error);
+    json_object_object_add(f, "return", json_object_new_int(n_res_written));
+    json_object_object_add(f, "res_out", json_object_new_flow_op_result_list(n_res_written, res));
+    json_object_end_function(f);
+    return n_res_written;
+}
+
 // Wrapper functions from rte_eal.h:
 
 int rte_eal_init(int argc, char **argv)

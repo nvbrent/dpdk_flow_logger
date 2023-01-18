@@ -58,6 +58,14 @@ json_object_new_flow_template_table_attr(const struct rte_flow_template_table_at
     return json_attr;
 }
 
+struct json_object *
+json_object_new_flow_op_attr(const struct rte_flow_op_attr *op_attr)
+{
+    struct json_object * json_op_attr = json_object_new_object();
+    json_object_object_add(json_op_attr, "postpone", json_object_new_boolean(op_attr->postpone));
+    return json_op_attr;
+}
+
 const char *
 flow_item_type_name(enum rte_flow_item_type type)
 {
@@ -591,4 +599,22 @@ json_object_new_flow_queue_attr_list(uint16_t nb_queue, const struct rte_flow_qu
         json_object_array_add(json_attr, json_object_new_uint64(attr[i]->size));
 
     return json_attr;
+}
+
+struct json_object *
+json_object_new_flow_op_result(const struct rte_flow_op_result *res)
+{
+    struct json_object * json_res = json_object_new_object();
+    json_object_object_add(json_res, "status", json_object_new_string(res->status ? "ERROR" : "SUCCESS"));
+    json_object_object_add(json_res, "user_data", json_object_new_uint64((intptr_t)res->user_data));
+    return json_res;
+}
+
+struct json_object *
+json_object_new_flow_op_result_list(uint16_t n_res, const struct rte_flow_op_result res[])
+{
+    struct json_object * json_res = json_object_new_array();
+    for (uint32_t i=0; i<n_res; i++)
+        json_object_array_add(json_res, json_object_new_flow_op_result(&res[i]));
+    return json_res;
 }

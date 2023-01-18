@@ -60,6 +60,11 @@ void load_wrappers(void)
     INIT_PFUNC(rte_flow_actions_template_destroy, handle_ethdev);
     INIT_PFUNC(rte_flow_template_table_create, handle_ethdev);
     INIT_PFUNC(rte_flow_template_table_destroy, handle_ethdev);
+    INIT_PFUNC(rte_flow_async_create, handle_ethdev);
+    INIT_PFUNC(rte_flow_async_create_by_index, handle_ethdev);
+    INIT_PFUNC(rte_flow_async_destroy, handle_ethdev);
+    INIT_PFUNC(rte_flow_push, handle_ethdev);
+    INIT_PFUNC(rte_flow_pull, handle_ethdev);
 }
 
 void init_logger(void)
