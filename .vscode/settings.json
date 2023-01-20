@@ -2,6 +2,12 @@
     "files.associations": {
         "dlfcn.h": "c",
         "compare": "c",
-        "type_traits": "c"
+        "type_traits": "c",
+        "any": "c",
+        "array": "c",
+        "functional": "c",
+        "tuple": "c",
+        "utility": "c",
+        "variant": "c"
     }
 }

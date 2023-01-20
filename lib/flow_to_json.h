@@ -59,6 +59,12 @@ const char *
 rte_flow_table_hash_func_name(enum rte_flow_table_hash_func type);
 
 const char *
+rte_flow_field_id_name(enum rte_flow_field_id id);
+
+const char *
+rte_flow_modify_op_name(enum rte_flow_modify_op op);
+
+const char *
 flow_item_type_name(enum rte_flow_item_type type);
 
 const char *
@@ -118,6 +124,9 @@ struct json_object *
 json_object_new_flow_action_rss(const struct rte_flow_action_rss * rss);
 
 struct json_object *
+json_object_new_flow_action_modify_field(const struct rte_flow_action_modify_field *mod);
+
+struct json_object *
 json_object_new_flow_action_conf(const struct rte_flow_action *action);
 
 struct json_object *
@@ -137,3 +146,7 @@ json_object_new_flow_op_result(const struct rte_flow_op_result *res);
 
 struct json_object *
 json_object_new_flow_op_result_list(uint16_t n_res, const struct rte_flow_op_result res[]);
+
+struct json_object *
+json_object_new_flow_action_modify_data(const struct rte_flow_action_modify_data *mod_data);
+

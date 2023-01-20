@@ -255,6 +255,65 @@ rte_flow_table_hash_func_name(enum rte_flow_table_hash_func type)
     }
 }
 
+const char *
+rte_flow_field_id_name(enum rte_flow_field_id id)
+{
+    switch (id)
+    {
+#define HANDLE_CASE(s) case RTE_FLOW_FIELD_ ## s: return #s
+	HANDLE_CASE(START);
+	HANDLE_CASE(MAC_DST);
+	HANDLE_CASE(MAC_SRC);
+	HANDLE_CASE(VLAN_TYPE);
+	HANDLE_CASE(VLAN_ID);
+	HANDLE_CASE(MAC_TYPE);
+	HANDLE_CASE(IPV4_DSCP);
+	HANDLE_CASE(IPV4_TTL);
+	HANDLE_CASE(IPV4_SRC);
+	HANDLE_CASE(IPV4_DST);
+	HANDLE_CASE(IPV6_DSCP);
+	HANDLE_CASE(IPV6_HOPLIMIT);
+	HANDLE_CASE(IPV6_SRC);
+	HANDLE_CASE(IPV6_DST);
+	HANDLE_CASE(TCP_PORT_SRC);
+	HANDLE_CASE(TCP_PORT_DST);
+	HANDLE_CASE(TCP_SEQ_NUM);
+	HANDLE_CASE(TCP_ACK_NUM);
+	HANDLE_CASE(TCP_FLAGS);
+	HANDLE_CASE(UDP_PORT_SRC);
+	HANDLE_CASE(UDP_PORT_DST);
+	HANDLE_CASE(VXLAN_VNI);
+	HANDLE_CASE(GENEVE_VNI);
+	HANDLE_CASE(GTP_TEID);
+	HANDLE_CASE(TAG);
+	HANDLE_CASE(MARK);
+	HANDLE_CASE(META);
+	HANDLE_CASE(POINTER);
+	HANDLE_CASE(VALUE);
+	HANDLE_CASE(IPV4_ECN);
+	HANDLE_CASE(IPV6_ECN);
+	HANDLE_CASE(GTP_PSC_QFI);
+	HANDLE_CASE(METER_COLOR);
+	HANDLE_CASE(HASH_RESULT);
+    default: return "UNKNOWN";
+#undef HANDLE_CASE
+    }
+}
+
+const char *
+rte_flow_modify_op_name(enum rte_flow_modify_op op)
+{
+    switch (op)
+    {
+#define HANDLE_CASE(s) case RTE_FLOW_MODIFY_ ## s: return #s
+    HANDLE_CASE(SET);
+    HANDLE_CASE(ADD);
+    HANDLE_CASE(SUB);
+    default: return "UNKNOWN";
+#undef HANDLE_CASE
+    }
+}
+
 bool addr_bits_set(const uint8_t * addr_bytes, int n_addr_bytes)
 {
     for (int i=0; i<n_addr_bytes; i++)
@@ -416,6 +475,14 @@ json_object_new_flow_item_udp(const struct rte_flow_item_udp * udp)
 }
 
 struct json_object *
+json_object_new_flow_item_meta(const struct rte_flow_item_meta * meta)
+{
+    struct json_object * json_meta = json_object_new_object();
+    json_object_object_add(json_meta, "data", json_object_new_uint64(meta->data));
+    return json_meta;
+}
+
+struct json_object *
 json_object_new_flow_item_spec(enum rte_flow_item_type type, const void *p)
 {
     switch (type)
@@ -427,6 +494,7 @@ json_object_new_flow_item_spec(enum rte_flow_item_type type, const void *p)
     case RTE_FLOW_ITEM_TYPE_VXLAN: return json_object_new_flow_item_vxlan(p);
     case RTE_FLOW_ITEM_TYPE_TCP: return json_object_new_flow_item_tcp(p);
     case RTE_FLOW_ITEM_TYPE_UDP: return json_object_new_flow_item_udp(p);
+    case RTE_FLOW_ITEM_TYPE_META: return json_object_new_flow_item_meta(p);
     default:
         break;
     }
@@ -525,6 +593,81 @@ json_object_new_flow_action_rss(const struct rte_flow_action_rss * rss)
 }
 
 struct json_object *
+json_object_new_flow_action_modify_data(const struct rte_flow_action_modify_data *mod_data)
+{
+    struct json_object * json_mod_data = json_object_new_object();
+    json_object_object_add(json_mod_data, "field", json_object_new_string(rte_flow_field_id_name(mod_data->field)));
+
+    switch(mod_data->field)
+    {
+	case RTE_FLOW_FIELD_START:
+	case RTE_FLOW_FIELD_VLAN_TYPE:
+	case RTE_FLOW_FIELD_GENEVE_VNI:
+		/* not supported yet */
+		break;
+	case RTE_FLOW_FIELD_MAC_DST:
+	case RTE_FLOW_FIELD_MAC_SRC:
+	case RTE_FLOW_FIELD_VLAN_ID:
+	case RTE_FLOW_FIELD_MAC_TYPE:
+	case RTE_FLOW_FIELD_IPV4_DSCP:
+	case RTE_FLOW_FIELD_IPV4_TTL:
+	case RTE_FLOW_FIELD_IPV4_SRC:
+	case RTE_FLOW_FIELD_IPV4_DST:
+	case RTE_FLOW_FIELD_IPV6_DSCP:
+	case RTE_FLOW_FIELD_IPV6_HOPLIMIT:
+	case RTE_FLOW_FIELD_IPV6_SRC:
+	case RTE_FLOW_FIELD_IPV6_DST:
+	case RTE_FLOW_FIELD_TCP_PORT_SRC:
+	case RTE_FLOW_FIELD_TCP_PORT_DST:
+	case RTE_FLOW_FIELD_TCP_SEQ_NUM:
+	case RTE_FLOW_FIELD_TCP_ACK_NUM:
+	case RTE_FLOW_FIELD_TCP_FLAGS:
+	case RTE_FLOW_FIELD_UDP_PORT_SRC:
+	case RTE_FLOW_FIELD_UDP_PORT_DST:
+	case RTE_FLOW_FIELD_VXLAN_VNI:
+	case RTE_FLOW_FIELD_GTP_TEID:
+	case RTE_FLOW_FIELD_MARK:
+	case RTE_FLOW_FIELD_META:
+	case RTE_FLOW_FIELD_IPV4_ECN:
+	case RTE_FLOW_FIELD_IPV6_ECN:
+	case RTE_FLOW_FIELD_GTP_PSC_QFI:
+	case RTE_FLOW_FIELD_METER_COLOR:
+	case RTE_FLOW_FIELD_HASH_RESULT:
+        json_object_object_add(json_mod_data, "offset", json_object_new_int(mod_data->offset));
+		break;
+	case RTE_FLOW_FIELD_TAG:
+        json_object_object_add(json_mod_data, "level", json_object_new_int(mod_data->level));
+        json_object_object_add(json_mod_data, "offset", json_object_new_int(mod_data->offset));
+        break;
+	case RTE_FLOW_FIELD_POINTER:
+        json_object_object_add(json_mod_data, "pvalue", json_object_new_uint64((intptr_t)mod_data->pvalue));
+        break;
+	case RTE_FLOW_FIELD_VALUE: {
+        char value_hex[64];
+        for (int i=0; i<16; i++)
+            snprintf(&value_hex[2*i], 3, "%02x", mod_data->value[i]);
+        json_object_object_add(json_mod_data, "value", json_object_new_string(value_hex));
+        break;
+    }
+	default:
+		break;
+    }
+
+    return json_mod_data;
+}
+
+struct json_object *
+json_object_new_flow_action_modify_field(const struct rte_flow_action_modify_field *mod)
+{
+    struct json_object * json_mod = json_object_new_object();
+    json_object_object_add(json_mod, "operation", json_object_new_string(rte_flow_modify_op_name(mod->operation)));
+    json_object_object_add(json_mod, "dst", json_object_new_flow_action_modify_data(&mod->dst));
+    json_object_object_add(json_mod, "src", json_object_new_flow_action_modify_data(&mod->src));
+    json_object_object_add(json_mod, "width", json_object_new_uint64(mod->width));
+    return json_mod;
+}
+
+struct json_object *
 json_object_new_flow_action_conf(const struct rte_flow_action *action)
 {
     switch (action->type)
@@ -534,6 +677,7 @@ json_object_new_flow_action_conf(const struct rte_flow_action *action)
     case RTE_FLOW_ACTION_TYPE_QUEUE: return json_object_new_flow_action_queue(action->conf);
     case RTE_FLOW_ACTION_TYPE_COUNT: return json_object_new_flow_action_count(action->conf);
     case RTE_FLOW_ACTION_TYPE_RSS: return json_object_new_flow_action_rss(action->conf);
+    case RTE_FLOW_ACTION_TYPE_MODIFY_FIELD: return json_object_new_flow_action_modify_field(action->conf);
     default: break;
     }
 

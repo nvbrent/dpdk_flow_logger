@@ -335,6 +335,7 @@ rte_flow_async_create(uint16_t port_id,
     if (op_attr)
         json_object_object_add(args, "op_attr", json_object_new_flow_op_attr(op_attr));
 
+    json_object_object_add(args, "template_table", json_object_new_uint64((intptr_t)template_table));
     json_object_object_add(args, "pattern", json_object_new_flow_item_array(pattern));
     json_object_object_add(args, "pattern_template_index", json_object_new_int(pattern_template_index));
     json_object_object_add(args, "actions", json_object_new_flow_actions_array(actions));
